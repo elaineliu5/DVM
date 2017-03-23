@@ -9,13 +9,15 @@ plot_one_result(result, max_range)
 \arguments{
 \item{result}{a returned value from run_simulations}
 
-\item{max_range}{the maximum range of probabilities in the plot breaks/legends}
+\item{max_range}{the maximum range of probabilities to be used for setting the color scale (breaks/legends)}
 }
 \value{
 None
 }
 \description{
-plot_one_result
+plot_one_result plots the logistic probabilities 
+and population sample points with a color scale corresponding to 
+a given probability range
 }
 \examples{
 plot_one_result(result1, max_range=range(unlist(result$range)))

@@ -9,11 +9,11 @@ get_maxent_predict(month, species_presence, climate, species_name)
 \arguments{
 \item{month}{an integer representing the month of the year (from 1 to 12)}
 
-\item{species_presence}{a dataframe containing longitudes and latitudes of species observation}
+\item{species_presence}{a dataframe containing longitudes and latitudes of species observation occurred in the given month}
 
 \item{climate}{a raster stack of environmental layers in the corresponding month}
 
-\item{species_name}{a length-2 vector containing genus and species name}
+\item{species_name}{a vector containing genus and species name}
 }
 \value{
 raw: raw probability raster
@@ -21,7 +21,13 @@ raw: raw probability raster
 logis: logistic probability raster
 }
 \description{
-get_maxent_predict
+get_maxent_predict uses the Maxent model to predict species distribution in a given month.
+The model for a species is determined from a set of environmental or climate layers 
+for a set of grid cells in a landscape, together with a set of sample locations 
+where the species has been observed. 
+The computed model is a probability distribution 
+(indicating the level of suitability for species' living) 
+over all the grid cells.
 }
 \examples{
 # Example: predict mosquito distribution in June

@@ -13,7 +13,9 @@ plot_results(results)
 None
 }
 \description{
-plot_results
+plot_results plots the logistic probabilities 
+and population sample points from multiple species simulations 
+using a common color scale.
 }
 \examples{
 plot_results(list(result1, result2))

@@ -13,15 +13,19 @@ leeR_demo <- function(string) {
 library(dismo) # dependencies: raster, sp
 library(plyr)
 
-#' get_species_data
-#'
-#' @param species_name a length-2 vector containing genus and species name
+#' @title get_species_data
+#' @description The function get_species_data draws species occurrence data from GBIF.
+#' get_species_data takes in a species name (a vector containing genus and species name) 
+#' and returns a dataframe containing presence data (including longitudes and latitudes)
+#' for the specified species drawn from GBIF.
+#' @param species_name a vector containing genus and species name
 #' @return a dataframe of presence data for the specified species
 #' @examples
-#' get_species_data(c("aedes", "aegypti"))
 #' # example: plot mosquito species presence data
+#' 
 #' mosquito_presence <- get_species_data(c("aedes", "aegypti"))
 #' mosquito_location <- mosquito_presence[, c("lon", "lat")]
+#' 
 #' # install.packages("maptools")
 #' library(maptools)
 #' data(wrld_simpl)
@@ -53,12 +57,16 @@ get_species_data <- function(species_name) {
 }
 
 
-#' get_environment_layers
-#'
-#' @param resolution the spatial resolution of environmental layers: 10, 5, 2.5
-#' @return a list of environment raster stack corresponding to environment conditions in each month
+#' @title get_environment_layers
+#' @description get_environment_layers draws environmental layers from WorldClim. 
+#' It takes in a resolution value and draws monthly environment data from WorldClim.
+#' @param resolution the spatial resolution of environmental layers
+#' (10, 5, or 2.5 (arc min))
+#' @return a list of environment raster stack corresponding to 
+#' environment conditions in each month
 #' @examples
 #' # plot mean temperatures throughout the year
+#' 
 #' par(mfrow=c(1, 4))
 #' environment_data <- get_environment_layers()
 #' tmeans <- stack()
@@ -75,6 +83,7 @@ get_species_data <- function(species_name) {
 #'      axis.args=list(at=seq(max_range[1], max_range[2], length.out=5),
 #'                     labels=round(seq(max_range[1], max_range[2], length.out=5),3),
 #'                     cex.axis=0.6))
+#' 
 #' 
 #' # plot environment conditions (mean temperature, min temperature, max temperature and precipitation) for June
 #' plot(environment_data[[6]])
@@ -112,9 +121,14 @@ get_environment_layers <- function(resolution=10) {
   }
 }
 
-#' get_boundary
-#'
-#' @param region region name stored in a vector (vector length depends on the granularity level of the region)
+#' @title get_boundary
+#' @description get_boundary draws the geographical boundary of a specified region from GADM.
+#' It takes in a vector of region name and returns a spatial polygon outlining the region.
+#' @param region region name stored in a vector 
+#' (vector length depends on the granularity level of the region,
+#' from national level down to county level, 
+#' i.e. c(“USA”), c(“USA”,“Pennsylvania”), c(“USA
+#' ”,“Pennsylvania”, “Allegheny”)), and
 #' @return a spatial polygon outlining the region
 #' @examples
 #' # Plotting the region of Pennsylvania
@@ -142,12 +156,18 @@ get_boundary <- function(region) {
   return (target_region)
 }
 
-#' get_maxent_predict
-#'
+#' @title get_maxent_predict
+#' @description get_maxent_predict uses the Maxent model to predict species distribution in a given month.
+#' The model for a species is determined from a set of environmental or climate layers 
+#' for a set of grid cells in a landscape, together with a set of sample locations 
+#' where the species has been observed. 
+#' The computed model is a probability distribution 
+#' (indicating the level of suitability for species' living) 
+#' over all the grid cells.
 #' @param month an integer representing the month of the year (from 1 to 12)
-#' @param species_presence a dataframe containing longitudes and latitudes of species observation
+#' @param species_presence a dataframe containing longitudes and latitudes of species observation occurred in the given month
 #' @param climate a raster stack of environmental layers in the corresponding month
-#' @param species_name a length-2 vector containing genus and species name
+#' @param species_name a vector containing genus and species name
 #' @return raw: raw probability raster
 #' @return logis: logistic probability raster
 #' @examples
@@ -185,19 +205,24 @@ get_maxent_predict <- function(month, species_presence, climate, species_name) {
   return (list(raw=maxent_predict_raw, logis=maxent_predict_logis))
 }
 
-#' population_sampling
-#'
-#' @param maxent_predict_raw character containing a string to
-#' print
-#' @param maxent_predict_logis
-#' @param region
-#' @param species
-#' @param N
-#' @param month_logis_base
-#' @param month
-#' @return month_samples: sample points drawn from the given month
-#' @return month_region_log: logistic probabilities in the given region in given month
-#' @return month_N: the number of samples drawn from the given month proportional to the sample size from the reference month
+#' @title population_sampling
+#' @description Given a specific region and month, 
+#' population_sampling function zooms in on the probability distributions 
+#' in the region, calculates its average logistic probabilities 
+#' and calculate the corresponding sample size for 
+#' the given month (based on the ratio of mean logistic probabilities 
+#' in the given month and the reference month)
+#' @param maxent_predict_raw global raw probabilities raster for the given month
+#' @param maxent_predict_logis global logistic probabilities raster for the given month
+#' @param region a vector of region names specifying a region of interest 
+#' from national levels down to county levels
+#' @param species a vector containing genus and species name
+#' @param N number of species samples to draw in the reference month
+#' @param month_logis_base global logistic probabilities raster for the reference month
+#' @param month an interger (1-12) indicating the month of interest
+#' @return month_samples: sample points (spatial points) drawn from the given month
+#' @return month_region_log: logistic probability raster of the given region in given month
+#' @return month_N: the number of samples (integer) drawn from the given month proportional to the sample size from the reference month
 #' @examples
 #' # Example: draw a sample of 2000 mosquitos from Pennsylvania
 #' sampling_results <- population_sampling(mosquito_predictions_6$raw,
@@ -275,17 +300,26 @@ population_sampling <- function(maxent_predict_raw, maxent_predict_logis,
 }
 
 
-#' run_simulation
-#'
-#' @param species_name
-#' @param month
-#' @param N
-#' @param region
-#' @param resolution
-#' @return log
-#' @return sample
-#' @return range
-#' @return N
+#' @title run_simulation
+#' @description run_simulation takes in a species name, a month, 
+#' the number of samples to draw for that month, 
+#' a region and optionally the environment layer resolution. 
+#' It performs the simulation for the species' population sampling 
+#' in the region across different months.
+#' @param species_name a vector containing genus and species name
+#' @param month an interger (1-12) indicating the month of interest
+#' @param N number of species samples to draw in the reference month
+#' @param region a vector of region names specifying a region of interest 
+#' from national levels down to county levels
+#' @param resolution the spatial resolution of environmental layers
+#' (10, 5, or 2.5 (arc min))
+#' @return log: a raster stack of logistic probability raster of the given region by month
+#' @return sample: a list of sample points (spatial points) drawn from the given region by month
+#' @return range: the range of logistic probabilities in the given region across all months
+#' useful for setting a common color scale when plotting the probability rasters for all months
+#' @return N: number of samples drawn from each month 
+#' (proportionate to the reference month sample size 
+#' by ratio of mean logistic probabilities)
 #' @examples
 #' region1 <- c("USA", "Pennsylvania")
 #' species_name1 <- c("Ixodes", "ricinus", "Linnaeus")
@@ -339,10 +373,12 @@ run_simulation <- function(species_name, month, N, region, resolution=10) {
   
 }
 
-#' plot_one_result
-#'
-#' @param result a returned value from run_simulations
-#' @param max_range the maximum range of probabilities in the plot breaks/legends
+#' @title plot_one_result
+#' @description plot_one_result plots the logistic probabilities 
+#' and population sample points with a color scale corresponding to 
+#' a given probability range
+#' @param result a returned value from run_simulation
+#' @param max_range the maximum range of probabilities to be used for setting the color scale (breaks/legends)
 #' @return None
 #' @examples
 #' plot_one_result(result1, max_range=range(unlist(result$range)))
@@ -368,9 +404,11 @@ plot_one_result <- function(result, max_range) {
   }
 }
 
-#' plot_results
-#'
-#' @param results a list of returned values from run_simulations
+#' @title plot_results
+#' @description plot_results plots the logistic probabilities 
+#' and population sample points from multiple species simulations 
+#' using a common color scale.
+#' @param results a list of returned values from run_simulation
 #' @return None
 #' @examples 
 #' plot_results(list(result1, result2))

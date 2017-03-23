@@ -7,13 +7,18 @@
 get_boundary(region)
 }
 \arguments{
-\item{region}{region name stored in a vector (vector length depends on the granularity level of the region)}
+\item{region}{region name stored in a vector 
+(vector length depends on the granularity level of the region,
+from national level down to county level, 
+i.e. c(“USA”), c(“USA”,“Pennsylvania”), c(“USA
+”,“Pennsylvania”, “Allegheny”)), and}
 }
 \value{
 a spatial polygon outlining the region
 }
 \description{
-get_boundary
+get_boundary draws the geographical boundary of a specified region from GADM.
+It takes in a vector of region name and returns a spatial polygon outlining the region.
 }
 \examples{
 # Plotting the region of Pennsylvania

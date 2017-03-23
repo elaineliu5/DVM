@@ -7,19 +7,23 @@
 get_species_data(species_name)
 }
 \arguments{
-\item{species_name}{a length-2 vector containing genus and species name}
+\item{species_name}{a vector containing genus and species name}
 }
 \value{
 a dataframe of presence data for the specified species
 }
 \description{
-get_species_data
+The function get_species_data draws species occurrence data from GBIF.
+get_species_data takes in a species name (a vector containing genus and species name) 
+and returns a dataframe containing presence data (including longitudes and latitudes)
+for the specified species drawn from GBIF.
 }
 \examples{
-get_species_data(c("aedes", "aegypti"))
 # example: plot mosquito species presence data
+
 mosquito_presence <- get_species_data(c("aedes", "aegypti"))
 mosquito_location <- mosquito_presence[, c("lon", "lat")]
+
 # install.packages("maptools")
 library(maptools)
 data(wrld_simpl)

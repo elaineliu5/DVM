@@ -9,18 +9,35 @@ population_sampling(maxent_predict_raw, maxent_predict_logis,
   graph_raw = F)
 }
 \arguments{
-\item{maxent_predict_raw}{character containing a string to
-print}
+\item{maxent_predict_raw}{global raw probabilities raster for the given month}
+
+\item{maxent_predict_logis}{global logistic probabilities raster for the given month}
+
+\item{region}{a vector of region names specifying a region of interest 
+from national levels down to county levels}
+
+\item{species}{a vector containing genus and species name}
+
+\item{N}{number of species samples to draw in the reference month}
+
+\item{month_logis_base}{global logistic probabilities raster for the reference month}
+
+\item{month}{an interger (1-12) indicating the month of interest}
 }
 \value{
-month_samples: sample points drawn from the given month
+month_samples: sample points (spatial points) drawn from the given month
 
-month_region_log: logistic probabilities in the given region in given month
+month_region_log: logistic probability raster of the given region in given month
 
-month_N: the number of samples drawn from the given month proportional to the sample size from the reference month
+month_N: the number of samples (integer) drawn from the given month proportional to the sample size from the reference month
 }
 \description{
-population_sampling
+Given a specific region and month, 
+population_sampling function zooms in on the probability distributions 
+in the region, calculates its average logistic probabilities 
+and calculate the corresponding sample size for 
+the given month (based on the ratio of mean logistic probabilities 
+in the given month and the reference month)
 }
 \examples{
 # Example: draw a sample of 2000 mosquitos from Pennsylvania

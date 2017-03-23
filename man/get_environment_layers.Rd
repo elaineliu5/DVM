@@ -7,16 +7,20 @@
 get_environment_layers(resolution = 10)
 }
 \arguments{
-\item{resolution}{the spatial resolution of environmental layers: 10, 5, 2.5}
+\item{resolution}{the spatial resolution of environmental layers
+(10, 5, or 2.5 (arc min))}
 }
 \value{
-a list of environment raster stack corresponding to environment conditions in each month
+a list of environment raster stack corresponding to 
+environment conditions in each month
 }
 \description{
-get_environment_layers
+get_environment_layers draws environmental layers from WorldClim. 
+It takes in a resolution value and draws monthly environment data from WorldClim.
 }
 \examples{
 # plot mean temperatures throughout the year
+
 par(mfrow=c(1, 4))
 environment_data <- get_environment_layers()
 tmeans <- stack()
@@ -33,6 +37,7 @@ plot(tmeans, legend.only=T,
      axis.args=list(at=seq(max_range[1], max_range[2], length.out=5),
                     labels=round(seq(max_range[1], max_range[2], length.out=5),3),
                     cex.axis=0.6))
+
 
 # plot environment conditions (mean temperature, min temperature, max temperature and precipitation) for June
 plot(environment_data[[6]])
