@@ -17,4 +17,14 @@ get_species_data
 }
 \examples{
 get_species_data(c("aedes", "aegypti"))
+# example: plot mosquito species presence data
+mosquito_presence <- get_species_data(c("aedes", "aegypti"))
+mosquito_location <- mosquito_presence[, c("lon", "lat")]
+# install.packages("maptools")
+library(maptools)
+data(wrld_simpl)
+plot(wrld_simpl)
+points(mosquito_location, col='blue', cex=0.5)
+title("Aedes Aegypti Observations")
+
 }

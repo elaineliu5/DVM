@@ -16,7 +16,12 @@ a spatial polygon outlining the region
 get_boundary
 }
 \examples{
-get_boundary(c("USA")) 
-get_boundary(c("USA","Pennsylvania")) 
-get_boundary(c("USA","Pennsylvania", "Allegheny"))
+# Plotting the region of Pennsylvania
+PA <- get_boundary(c("USA", "Pennsylvania"))
+plot(PA)
+
+# Plotting the environment conditions for Pennsylvania
+PA_environment_6 <- mask(crop(environment_data[[6]], PA), PA)
+plot(PA_environment_6)
+
 }

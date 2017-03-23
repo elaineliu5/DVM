@@ -16,5 +16,25 @@ a list of environment raster stack corresponding to environment conditions in ea
 get_environment_layers
 }
 \examples{
-get_environment_layers()
+# plot mean temperatures throughout the year
+par(mfrow=c(1, 4))
+environment_data <- get_environment_layers()
+tmeans <- stack()
+max_range <- c(0,0)
+for (i in 1:12) {
+  tmeans <- stack(tmeans, environment_data[[i]][[1]])
+  max_range <- range(max_range, range(getValues(environment_data[[i]][[1]]), na.rm=T))
+}
+plot(tmeans, breaks=seq(from=min(max_range), to=max(max_range), length.out=100), 
+     col=rev(terrain.colors(99)), legend=F)
+plot(tmeans, legend.only=T, 
+     breaks=seq(from=min(max_range), to=max(max_range), length.out=100),
+     col=rev(terrain.colors(99)),
+     axis.args=list(at=seq(max_range[1], max_range[2], length.out=5),
+                    labels=round(seq(max_range[1], max_range[2], length.out=5),3),
+                    cex.axis=0.6))
+
+# plot environment conditions (mean temperature, min temperature, max temperature and precipitation) for June
+plot(environment_data[[6]])
+
 }

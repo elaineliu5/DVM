@@ -16,13 +16,23 @@ get_maxent_predict(month, species_presence, climate, species_name)
 \item{species_name}{a length-2 vector containing genus and species name}
 }
 \value{
-raw raw probability raster
+raw: raw probability raster
 
-logis logistic probability raster
+logis: logistic probability raster
 }
 \description{
 get_maxent_predict
 }
 \examples{
-get_maxent_predict(6, mosquito_presence, climate_jun, c("aedes", "aegypti"))
+# Example: predict mosquito distribution in June
+month <- 6
+mosquito_month <- mosquito_presence[mosquito_presence$month==month, c("lon", "lat")]
+mosquito_month <- subset(mosquito_month, !is.na(lon) & !is.na(lat))
+mosquito_predictions_6 <- get_maxent_predict(month, mosquito_month, environment_data[[6]], c("aedes", "aegypti"))
+par(mfrow=c(1,2))
+plot(mosquito_predictions_6$raw)
+title("Aedes Aegypti Distribution Raw Predictions")
+plot(mosquito_predictions_6$logis)
+title("Aedes Aegypti Distribution Logistic Predictions")
+
 }

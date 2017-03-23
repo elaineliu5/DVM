@@ -19,6 +19,16 @@ library(plyr)
 #' @return a dataframe of presence data for the specified species
 #' @examples
 #' get_species_data(c("aedes", "aegypti"))
+#' # example: plot mosquito species presence data
+#' mosquito_presence <- get_species_data(c("aedes", "aegypti"))
+#' mosquito_location <- mosquito_presence[, c("lon", "lat")]
+#' # install.packages("maptools")
+#' library(maptools)
+#' data(wrld_simpl)
+#' plot(wrld_simpl)
+#' points(mosquito_location, col='blue', cex=0.5)
+#' title("Aedes Aegypti Observations")
+#' 
 get_species_data <- function(species_name) {
   a = 1
   # name for the dataframe/file containing the presence data for the specific species
@@ -48,10 +58,34 @@ get_species_data <- function(species_name) {
 #' @param resolution the spatial resolution of environmental layers: 10, 5, 2.5
 #' @return a list of environment raster stack corresponding to environment conditions in each month
 #' @examples
-#' get_environment_layers()
+#' # plot mean temperatures throughout the year
+#' par(mfrow=c(1, 4))
+#' environment_data <- get_environment_layers()
+#' tmeans <- stack()
+#' max_range <- c(0,0)
+#' for (i in 1:12) {
+#'   tmeans <- stack(tmeans, environment_data[[i]][[1]])
+#'   max_range <- range(max_range, range(getValues(environment_data[[i]][[1]]), na.rm=T))
+#' }
+#' plot(tmeans, breaks=seq(from=min(max_range), to=max(max_range), length.out=100), 
+#'      col=rev(terrain.colors(99)), legend=F)
+#' plot(tmeans, legend.only=T, 
+#'      breaks=seq(from=min(max_range), to=max(max_range), length.out=100),
+#'      col=rev(terrain.colors(99)),
+#'      axis.args=list(at=seq(max_range[1], max_range[2], length.out=5),
+#'                     labels=round(seq(max_range[1], max_range[2], length.out=5),3),
+#'                     cex.axis=0.6))
+#' 
+#' # plot environment conditions (mean temperature, min temperature, max temperature and precipitation) for June
+#' plot(environment_data[[6]])
+#' 
 get_environment_layers <- function(resolution=10) {
-  if (environment_loaded) return
-  else {
+  climates_datafile_name <- "climates.rds"
+  if (exists("climates")) return (climates)
+  else if (file.exists(climates_datafile_name)) {
+    # climate data is saved locally; load data and return
+    return (readRDS(climates_datafile_name))
+  } else {
     tmean <- getData('worldclim', var='tmean', res=resolution)
     tmin <- getData('worldclim', var='tmin', res=resolution)
     tmax <- getData('worldclim', var='tmax', res=resolution)
@@ -70,22 +104,27 @@ get_environment_layers <- function(resolution=10) {
     climate_dec <- stack(tmean$tmean12, tmin$tmin12, tmax$tmax12, prec$prec12)
     
     # save 12-month climates globally
-    climates <<- c(climate_jan, climate_feb, climate_mar, climate_apr, 
-                   climate_may, climate_jun, climate_jul, climate_aug, 
-                   climate_sep, climate_oct, climate_nov, climate_dec)
-    environment_loaded <<- TRUE
+    climates <- c(climate_jan, climate_feb, climate_mar, climate_apr, 
+                  climate_may, climate_jun, climate_jul, climate_aug, 
+                  climate_sep, climate_oct, climate_nov, climate_dec)
+    saveRDS(climates, climates_datafile_name)
+    return (climates)
   }
 }
-
 
 #' get_boundary
 #'
 #' @param region region name stored in a vector (vector length depends on the granularity level of the region)
 #' @return a spatial polygon outlining the region
 #' @examples
-#' get_boundary(c("USA")) 
-#' get_boundary(c("USA","Pennsylvania")) 
-#' get_boundary(c("USA","Pennsylvania", "Allegheny"))
+#' # Plotting the region of Pennsylvania
+#' PA <- get_boundary(c("USA", "Pennsylvania"))
+#' plot(PA)
+#' 
+#' # Plotting the environment conditions for Pennsylvania
+#' PA_environment_6 <- mask(crop(environment_data[[6]], PA), PA)
+#' plot(PA_environment_6)
+#' 
 get_boundary <- function(region) {
   if (length(region) == 1) {
     target_region <- getData("GADM", country=region, level=0)
@@ -112,7 +151,17 @@ get_boundary <- function(region) {
 #' @return raw: raw probability raster
 #' @return logis: logistic probability raster
 #' @examples
-#' get_maxent_predict(6, mosquito_presence, climate_jun, c("aedes", "aegypti"))
+#' # Example: predict mosquito distribution in June
+#' month <- 6
+#' mosquito_month <- mosquito_presence[mosquito_presence$month==month, c("lon", "lat")]
+#' mosquito_month <- subset(mosquito_month, !is.na(lon) & !is.na(lat))
+#' mosquito_predictions_6 <- get_maxent_predict(month, mosquito_month, environment_data[[6]], c("aedes", "aegypti"))
+#' par(mfrow=c(1,2))
+#' plot(mosquito_predictions_6$raw)
+#' title("Aedes Aegypti Distribution Raw Predictions")
+#' plot(mosquito_predictions_6$logis)
+#' title("Aedes Aegypti Distribution Logistic Predictions")
+#' 
 get_maxent_predict <- function(month, species_presence, climate, species_name) {
   # java setup for maxent modeling
   jar <- paste(system.file(package="dismo"), "/java/maxent.jar", sep='')
@@ -150,21 +199,33 @@ get_maxent_predict <- function(month, species_presence, climate, species_name) {
 #' @return month_region_log: logistic probabilities in the given region in given month
 #' @return month_N: the number of samples drawn from the given month proportional to the sample size from the reference month
 #' @examples
-#' leeR_demo()
+#' # Example: draw a sample of 2000 mosquitos from Pennsylvania
+#' sampling_results <- population_sampling(mosquito_predictions_6$raw,
+#' mosquito_predictions_6$logis,
+#' region=c("USA", "Pennsylvania"),
+#' species=c("aedes", "aegypti"), 
+#' N=2000,
+#' month_logis_base=mosquito_predictions_6$logis, 
+#' month=6, graph_logis=T, graph_raw=T) 
+#' plot(sampling_results$month_region_log)
+#' points(sampling_results$month_samples, cex=0.5, pch=16, col="blue")
+#' title("Logistic Probabilities and Aedes Aegypti Population Sampling for PA")
 # helper: population sampling given distribution
 population_sampling <- function(maxent_predict_raw, maxent_predict_logis,
                                 region=c("ITA"),
-                                species, N, month_logis_base, month) {
+                                species, N, month_logis_base, month, 
+                                graph_logis=F, graph_raw=F) {
   # get region's shape (sptialpolygons) and extract corresponding grids from the prediction raster
   target_region <- get_boundary(region)
   region_pred_raw <- mask(crop(maxent_predict_raw, target_region), target_region)
   
   region_pred_logis <- mask(crop(maxent_predict_logis, target_region), target_region)
+  if (graph_logis) plot(region_pred_logis, main=paste("Logistic Probabilities -", paste(region, collapse=",")))
   region_pred_logis_base <- mask(crop(month_logis_base, target_region), target_region)
   N <- mean(getValues(region_pred_logis), na.rm=T) / mean(getValues(region_pred_logis_base), na.rm=T) * N
   
   # use raw probabilities from maxent model
-  #plot(region_pred_raw, main=paste("Raw Probabilities -", region))
+  if (graph_raw) plot(region_pred_raw, main=paste("Raw Probabilities -", paste(region, collapse=",")))
   probrast<-region_pred_raw
   
   # normalize the region probability raster by dividing 
@@ -207,17 +268,16 @@ population_sampling <- function(maxent_predict_raw, maxent_predict_logis,
   x_radius <- res(region_pred_raw)[1]/2
   y_radius <- res(region_pred_raw)[2]/2
   
-  # Time: sampling 1000 
   start_time <- Sys.time()
-  sample_points_1000<-probsel(probrast, N, x_radius, y_radius)
+  sample_points<-probsel(probrast, N, x_radius, y_radius)
   end_time <- Sys.time()
-  return (list(month_samples=sample_points_1000, month_region_log=region_pred_logis, month_N=N))
+  return (list(month_samples=sample_points, month_region_log=region_pred_logis, month_N=N))
 }
 
 
 #' run_simulation
 #'
-#' @param speciess_name
+#' @param species_name
 #' @param month
 #' @param N
 #' @param region
@@ -227,7 +287,12 @@ population_sampling <- function(maxent_predict_raw, maxent_predict_logis,
 #' @return range
 #' @return N
 #' @examples
-#' leeR_demo()
+#' region1 <- c("USA", "Pennsylvania")
+#' species_name1 <- c("Ixodes", "ricinus", "Linnaeus")
+#' species_name2 <- c("mus", "musculus")
+#' result1 <- run_simulation(species_name1, month, N, region1, resolution)
+#' result2 <- run_simulation(species_name2, month, N, region1, resolution)
+#' 
 run_simulation <- function(species_name, month, N, region, resolution=10) {
   species_presence <- get_species_data(species_name)
   species_month <- species_presence[species_presence$month==month,c("lon", "lat")]
@@ -273,3 +338,53 @@ run_simulation <- function(species_name, month, N, region, resolution=10) {
                 range=probability_ranges, N=monthly_N))
   
 }
+
+#' plot_one_result
+#'
+#' @param result a returned value from run_simulations
+#' @param max_range the maximum range of probabilities in the plot breaks/legends
+#' @return None
+#' @examples
+#' plot_one_result(result1, max_range=range(unlist(result$range)))
+#' 
+plot_one_result <- function(result, max_range) {
+  par(mfrow=c(4,3))
+  for (i in 1:nlayers(result$log)) {
+    layer <- result$log[[i]]
+    plot(layer, breaks=seq(from=min(max_range), to=max(max_range), length.out=100), 
+         col=rev(terrain.colors(99)),
+         legend=F,
+         main=paste(paste(result$species_name, collapse=" "), as.integer(result$N[i]),
+                    "samples -",
+                    paste(result$region, collapse=", "), months[i]))
+    plot(layer, legend.only=T, 
+         breaks=seq(from=min(max_range), to=max(max_range), length.out=100), 
+         col=rev(terrain.colors(99)),
+         axis.args=list(at=seq(max_range[1], max_range[2], length.out=5),
+                        labels=round(seq(max_range[1], max_range[2], length.out=5),3),
+                        cex.axis=0.6),
+         legend.args=list(text='Logistic Probability', side=4, font=2, line=2.5, cex=0.8))
+    plot(result$sample[[i]], add=T, pch=16, cex=0.5, col="blue")
+  }
+}
+
+#' plot_results
+#'
+#' @param results a list of returned values from run_simulations
+#' @return None
+#' @examples 
+#' plot_results(list(result1, result2))
+#' 
+plot_results <- function(results) {
+  max_range <- c(0,0)
+  for (i in 1:length(results)) {
+    result = results[[i]]
+    max_range <- range(max_range, range(unlist(result$range)))
+  }
+  for (i in 1:length(results)) {
+    result = results[[i]]
+    print(i)
+    plot_one_result(result, max_range)
+  }
+}
+
