@@ -1,14 +1,8 @@
 # Towards Synthetic Ecosystems of Disease Vectors
 
-## Documentation:
-
-HTML Version:
+## Documentation (HTML):
 
 https://github.com/elaineliu5/DVM/blob/master/towards_synthetic_ecosystem_of_disease_vectors.html
-
-PDF Version:
-
-https://github.com/elaineliu5/DVM/blob/master/towards_synthetic_ecosystem_of_disease_vectors.pdf
 
 ## Poster:
 
